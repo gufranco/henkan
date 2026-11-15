@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+uv run ruff format --check .
+uv run ruff check .
+uv run mypy
+pnpm run format:check
+
+staged="$(git diff --cached --name-only --diff-filter=AM)"
+pattern='\.(iso|bin|img|cue|gdi|toc|chd|cdi|mds|mdf|nrg|ccd|sub|ecm|pbp|vcd|cso|zso|dax|jso|rvz|wia|gcz|wbfs|ciso|nkit|wux|wud|wua|xiso|zar|pkg|ird|nsp|nsz|xci|xcz|nup|3ds|cci|cxi|3dsx|cia|zcci|zcxi|z3dsx|nkds|keys|key)$'
+if printf '%s\n' "${staged}" | grep -qiE "${pattern}"; then
+  echo "refusing to commit a disc image, game package or key file; supply it in external/ and see artifacts.manifest.json" >&2
+  exit 1
+fi

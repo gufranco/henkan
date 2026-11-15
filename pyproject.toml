@@ -1,0 +1,105 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "henkan"
+dynamic = ["version"]
+description = "Convert, verify and store game disc images and game packages"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE.md"]
+authors = [{ name = "Gustavo Franco" }]
+keywords = ["disc-image", "chd", "iso", "rvz", "cso", "preservation", "conversion"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: System :: Archiving",
+  "Topic :: Utilities",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.optional-dependencies]
+cli = ["typer==0.29.1"]
+
+[project.urls]
+Homepage = "https://github.com/gufranco/henkan"
+Issues = "https://github.com/gufranco/henkan/issues"
+
+[project.scripts]
+henkan = "henkan.entry:main"
+
+[dependency-groups]
+dev = [
+  "pytest==9.2.0",
+  "pytest-cov==7.1.0",
+  "ruff==0.17.5",
+  "mypy==2.4.1",
+  "typer==0.29.1",
+]
+
+[tool.hatch.version]
+path = "src/henkan/version.py"
+pattern = "^VERSION = \"(?P<version>[^\"]+)\"$"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/henkan"]
+exclude = ["*_test.py", "*_test_support.py", "conftest.py"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/henkan", "tests", "README.md", "LICENSE", "NOTICE.md", "pyproject.toml", "uv.lock"]
+
+[tool.pytest.ini_options]
+testpaths = ["src", "tests"]
+addopts = "-q --strict-markers --strict-config"
+pythonpath = ["src"]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/henkan"]
+omit = ["*_test.py", "*/conftest.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = ['if __name__ == "__main__":', "if TYPE_CHECKING:"]
+fail_under = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "PTH", "RUF", "S", "BLE"]
+
+[tool.ruff.lint.per-file-ignores]
+"*_test.py" = ["S101"]
+"tests/**" = ["S101", "S603", "S607"]
+
+[tool.mypy]
+strict = true
+python_version = "3.14"
+warn_unreachable = true
+warn_no_return = true
+strict_equality = true
+extra_checks = true
+enable_error_code = [
+  "explicit-override",
+  "ignore-without-code",
+  "possibly-undefined",
+  "redundant-expr",
+  "truthy-bool",
+  "truthy-iterable",
+  "unused-awaitable",
+]
+files = ["src/henkan"]
+exclude = "(_test|conftest)\\.py$"

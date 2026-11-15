@@ -1,0 +1,39 @@
+name: Weekly
+
+on:
+  schedule:
+    - cron: "33 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ahead:
+    name: On Python ${{ matrix.python }}
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.14", "3.15"]
+    steps:
+      - uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v7.0.1
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Install on this Python
+        run: uv sync --locked --python "${{ matrix.python }}"
+
+      - name: Types, on this Python
+        run: uv run mypy --python-version "${{ matrix.python }}"
+
+      - name: The suite, against nothing but the repository
+        run: uv run pytest -q -p no:randomly --cov

@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: henkan
+message: If you use this software, please cite it as below.
+type: software
+authors:
+  - given-names: Gustavo
+    family-names: Franco
+    alias: gufranco
+repository-code: https://github.com/gufranco/henkan
+abstract: Convert, verify and store game disc images and game packages
+keywords:
+  - disc-image
+  - chd
+  - iso
+  - preservation
+license: MIT

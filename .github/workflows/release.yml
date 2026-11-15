@@ -1,0 +1,158 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Semantic release
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event != 'pull_request')
+    runs-on: ubuntu-26.04
+    outputs:
+      tag: ${{ steps.released.outputs.tag }}
+    steps:
+      - uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Install release tooling
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Stop on a known high or critical advisory in the release tooling
+        run: pnpm audit --audit-level high
+
+      - name: Record the tag that already existed
+        id: before
+        run: echo "tag=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)" >>"$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec semantic-release
+
+      - name: Resolve the released tag
+        id: released
+        env:
+          BEFORE: ${{ steps.before.outputs.tag }}
+        run: |
+          tag=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          if [ -z "${tag}" ] || [ "${tag}" = "${BEFORE}" ]; then
+            echo "tag=" >>"$GITHUB_OUTPUT"
+            echo "::notice title=No release::nothing new was released, so no asset is attached"
+          else
+            echo "tag=${tag}" >>"$GITHUB_OUTPUT"
+            echo "released tag: ${tag}"
+          fi
+        shell: bash
+
+      - name: Describe what ships
+        if: steps.released.outputs.tag != ''
+        env:
+          UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/shipped
+        run: |
+          uv sync --locked --no-dev --no-editable --python 3.14
+          uvx --from cyclonedx-bom==6.0.0 cyclonedx-py environment "${UV_PROJECT_ENVIRONMENT}" \
+            --output-format json --outfile sbom.json
+        shell: bash
+
+      - name: Nothing ships but the package and its approved dependencies
+        if: steps.released.outputs.tag != ''
+        run: |
+          python3 - <<'CHECK'
+          import json
+          import sys
+          from pathlib import Path
+
+          approved = {"henkan"}
+          held = json.loads(Path("sbom.json").read_text())
+          named = sorted(one["name"] for one in held.get("components", ()))
+          extra = [one for one in named if one not in approved]
+          print(f"components: {', '.join(named) or 'none'}")
+          if extra:
+              print(f"::error title=New runtime dependency::{', '.join(extra)}")
+              sys.exit(1)
+          CHECK
+        shell: bash
+
+      - name: Drop the build path from the bill of materials
+        if: steps.released.outputs.tag != ''
+        run: |
+          python3 - <<'STRIP'
+          import json
+          import sys
+          from pathlib import Path
+
+          held = Path("sbom.json")
+          bom = json.loads(held.read_text())
+          for component in bom.get("components", ()):
+              kept = [
+                  ref
+                  for ref in component.get("externalReferences", ())
+                  if not str(ref.get("url", "")).startswith("file://")
+              ]
+              if kept:
+                  component["externalReferences"] = kept
+              else:
+                  component.pop("externalReferences", None)
+          held.write_text(json.dumps(bom, indent=2, sort_keys=True) + "\n")
+          if "file://" in held.read_text():
+              print("::error title=Build path retained::sbom.json still names a file:// path")
+              sys.exit(1)
+          STRIP
+        shell: bash
+
+      - name: Sign it
+        if: steps.released.outputs.tag != ''
+        run: uvx --from sigstore==4.5.0 sigstore sign sbom.json --bundle sbom.json.sigstore.json
+        shell: bash
+
+      - name: Attach both to the release
+        if: steps.released.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.released.outputs.tag }}
+        run: gh release upload "${TAG}" sbom.json sbom.json.sigstore.json
+        shell: bash
+
+  formula:
+    name: Point the formula at the new release
+    needs: release
+    if: needs.release.outputs.tag != ''
+    uses: ./.github/workflows/formula.yml
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    permissions:
+      contents: read
+    secrets: inherit

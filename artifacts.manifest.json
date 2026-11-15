@@ -1,0 +1,5 @@
+{
+  "schema": 1,
+  "note": "Files this project neither ships nor downloads: real disc images, keys and reference data used only by the optional local cross-checks. Supply each one yourself, legally obtained, in the gitignored external/ folder. Identify it by its filename and every value in accepted: size in bytes plus CRC32, MD5, SHA-1 and SHA-256. sha256 decides accept or reject; the rest identify and cross-check. No download location is recorded here, by design. CI and the gate suite never use these.",
+  "artifacts": []
+}

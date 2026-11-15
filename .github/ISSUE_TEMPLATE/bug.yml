@@ -1,0 +1,41 @@
+name: Something does not work
+description: A command failed, a conversion came out wrong, or a file was refused that should not have been.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not attach a game, a disc image, a package or a key. Its size and SHA-256
+        identify it without sending it, and a small synthetic file that shows the problem is better still.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command you ran and what it printed. Paste the output rather than describing it.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: input
+    id: format
+    attributes:
+      label: Input format and the program that wrote it
+      placeholder: CHD written by chdman 0.289
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of henkan doctor
+      render: shell
+    validations:
+      required: true
