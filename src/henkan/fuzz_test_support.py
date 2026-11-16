@@ -8,7 +8,7 @@ from typing import override
 from hypothesis import settings
 from hypothesis import strategies as st
 
-from henkan.errors import FormatError
+from henkan.errors import FormatError, HenkanError
 from henkan.source import Source
 
 EXAMPLES = 10_000
@@ -16,6 +16,7 @@ LIMIT = 4 * 1024 * 1024
 READS_MAX = 100_000
 HOSTILE = (b"\0", b"\xff", b"\x7f", b"\x80", b"\xff\xff", b"\xff\xff\xff\xff", b"\0\0\0\x80")
 FUZZ = settings(max_examples=EXAMPLES, deadline=None, derandomize=True, database=None)
+QUICK = settings(FUZZ, max_examples=EXAMPLES // 5)
 
 type Mutations = list[tuple[int, int, bytes]]
 
@@ -65,10 +66,14 @@ def corrupted(base: bytes, hot: tuple[int, ...], mutations: Mutations, cut: int 
     return bytes(image if cut is None else image[: cut % (len(image) + 1)])
 
 
-def attempt(action: Callable[[Source], object], data: bytes) -> Outcome:
+def attempt(
+    action: Callable[[Source], object],
+    data: bytes,
+    refusal: type[HenkanError] = FormatError,
+) -> Outcome:
     handle = _Counting(data)
     try:
         action(Source(handle, len(data), LIMIT, "fuzzed"))
-    except FormatError:
+    except refusal:
         return Outcome(True, len(handle.sizes), max(handle.sizes, default=0))
     return Outcome(False, len(handle.sizes), max(handle.sizes, default=0))

@@ -24,7 +24,7 @@ henkan はゲームのディスクイメージやゲームパッケージをあ�
 
 ## 状況
 
-henkan は開発の初期段階です。現時点ではインストールと自身の環境チェックができ、変換機能はまだありません。形式はそれぞれ個別のリリースで追加され、このページには動作するものだけを記載します。
+henkan は開発の初期段階です。現時点では自身の環境チェック、ディスクイメージやゲームフォルダーの判別と変換可能な形式の表示、そして実行を伴わない変換計画の作成ができ、変換機能はまだありません。形式はそれぞれ個別のリリースで追加され、このページには動作するものだけを記載します。
 
 ## インストール
 
@@ -53,6 +53,33 @@ compression.zstd   available
 ```
 
 `henkan doctor --json` は同じレポートを JSON で出力し、必要なものが欠けている場合は終了コード 1 で終了します。
+
+`henkan info` は CUE、GDI、TOC、CCD、MDS のシート、ISO と BIN のイメージ、PBP ファイル、3DS ファイル、ゲームフォルダーを読み取り、ファイル名だけではなく内容から判別します。`henkan list` は既定の変換先を `*` で示します。どちらもファイルとフォルダーを受け取り、`--json` で JSON を出力し、ファイルを拒否した場合は理由を標準エラーに出力して終了コード 1 で終了します。
+
+```console
+$ henkan info game.cue
+game.cue
+  kind      cue
+  platform  PS1
+  disc      CD: a CUE sheet describes a CD
+  id        ABCD-12345
+  tracks    MODE2/2352, AUDIO
+  size      733,824,000 bytes
+  files     game.cue, game.bin
+$ henkan list game.cue
+game.cue  PS1  CD  733,824,000 bytes
+  * chd
+    pbp
+    vcd
+    cdi
+    cue-ecc
+$ henkan convert game.pbp --to cdi --dry-run
+game.pbp to cdi
+  1. pbp to cue, kept in a temporary folder: 733,824,000 bytes
+  2. cue to cdi
+  temporary space: 733,824,000 bytes
+  expected output: 733,824,000 bytes
+```
 
 ## henkan に含まれないもの
 

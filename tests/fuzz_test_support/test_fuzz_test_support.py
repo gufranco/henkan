@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from henkan import fuzz_test_support as fuzz
-from henkan.errors import FormatError
+from henkan.errors import FormatError, HenkanError
 from henkan.source import Source
 
 
@@ -47,6 +47,16 @@ class TestAttempting:
 
         # Assert
         assert outcome == fuzz.Outcome(refused=True, reads=0, largest=0)
+
+    def test_another_error_type_counts_as_a_refusal_only_when_named(self):
+        # Arrange
+        data = b"abcdef"
+
+        # Act
+        outcome = fuzz.attempt(refuse, data, HenkanError)
+
+        # Assert
+        assert outcome.refused is True
 
     def test_a_clean_run_reports_how_much_it_read(self):
         # Arrange

@@ -1,17 +1,34 @@
 from __future__ import annotations
 
+import random
 import struct
 from collections.abc import Mapping
 from dataclasses import dataclass
 
 from henkan.formats.sectors import RAW_SECTOR, SECTOR, SYNC
 
+SEED = 20261116
 ISO_FIRST_FREE = 18
 UDF_PARTITION = 272
 UDF_SEQUENCE = 32
 UDF_ANCHOR = 256
 
 type Tree = Mapping[str, bytes | Tree]
+
+
+def rng() -> random.Random:
+    return random.Random(SEED)  # noqa: S311
+
+
+def game_code(source: random.Random) -> tuple[str, str]:
+    letters = "".join(source.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=4))
+    digits = "".join(source.choices("0123456789", k=5))
+    return letters, digits
+
+
+def title(source: random.Random) -> str:
+    words = ("Lantern", "Harbor", "Circuit", "Meadow", "Comet", "Atlas", "Ember", "Tide")
+    return " ".join(source.sample(words, k=3))
 
 
 def patched(image: bytes, offset: int, data: bytes) -> bytes:
@@ -218,3 +235,77 @@ def mds_image(tracks: tuple[MdsTrack, ...], name: str, *, wide: bool = False) ->
     text = name.encode("utf-16-le" if wide else "latin-1") + bytes(2)
     footer = struct.pack("<II", footer_at + 8, int(wide))
     return bytes(head) + session + bytes(blocks) + footer + text
+
+
+def sfo(values: Mapping[str, str | int]) -> bytes:
+    keys, data, entries = b"", b"", b""
+    for key, value in values.items():
+        raw = struct.pack("<I", value) if isinstance(value, int) else value.encode() + b"\0"
+        kind = 0x0404 if isinstance(value, int) else 0x0204
+        entries += struct.pack("<HHIII", len(keys), kind, len(raw), len(raw), len(data))
+        keys += key.encode() + b"\0"
+        data += raw
+    keys_at = 20 + len(entries)
+    head = b"\0PSF" + struct.pack("<IIII", 0x101, keys_at, keys_at + len(keys), len(values))
+    return head + entries + keys + data
+
+
+def xdvdfs_volume(names: tuple[str, ...]) -> bytes:
+    table = bytearray(b"\xff" * SECTOR)
+    position = 0
+    for index, name in enumerate(sorted(names, key=str.upper)):
+        raw = name.encode("cp1252")
+        size = -(-(14 + len(raw)) // 4) * 4
+        following = (position + size) // 4 if index + 1 < len(names) else 0
+        entry = struct.pack("<HHIIBB", 0, following, 40 + index, 0, 0x80, len(raw)) + raw
+        table[position : position + len(entry)] = entry
+        position += size
+    descriptor = bytearray(SECTOR)
+    descriptor[0:20] = descriptor[0x7EC:0x800] = b"MICROSOFT*XBOX*MEDIA"
+    descriptor[0x14:0x1C] = struct.pack("<II", 33, SECTOR)
+    return bytes(0x10000) + bytes(descriptor) + bytes(table)
+
+
+def pbp_image(discs: int, values: Mapping[str, str | int]) -> bytes:
+    param = sfo(values)
+    psar_at = 0x10000
+    offsets = (0x28, *((0x28 + len(param),) * 6), psar_at)
+    head = b"\0PBP" + struct.pack("<I8I", 0x10000, *offsets) + param
+    if discs == 1:
+        return head.ljust(psar_at, b"\0") + b"PSISOIMG0000" + bytes(0x400)
+    table = struct.pack(
+        "<5I", *(0x8000 * (index + 1) if index < discs else 0 for index in range(5))
+    )
+    return head.ljust(psar_at, b"\0") + b"PSTITLEIMG000000".ljust(0x200, b"\0") + table
+
+
+def nintendo_header(code: str, name: str, *, wii: bool) -> bytes:
+    head = bytearray(0x60)
+    head[0:6] = code.encode()
+    head[0x18:0x20] = bytes.fromhex("5D1C9EA300000000" if wii else "00000000C2339F3D")
+    head[0x20 : 0x20 + len(name)] = name.encode()
+    return bytes(head)
+
+
+def npdm(title_id: int, acid_gap: int) -> bytes:
+    data = bytearray(0x700)
+    data[0:4] = b"META"
+    data[0x70:0x7C] = struct.pack("<III", 0x80, 0x60, 0x100)
+    data[0x80:0x84] = b"ACI0"
+    data[0x90:0x98] = struct.pack("<Q", title_id)
+    data[0x100 + acid_gap : 0x104 + acid_gap] = b"ACID"
+    return bytes(data)
+
+
+def ncch(*, decrypted: bool) -> bytes:
+    data = bytearray(0x200)
+    data[0x100:0x104] = b"NCCH"
+    data[0x18F] = 4 if decrypted else 0
+    return bytes(data)
+
+
+def ncsd(partition: bytes) -> bytes:
+    data = bytearray(0x4000)
+    data[0x100:0x104] = b"NCSD"
+    data[0x120:0x128] = struct.pack("<II", 0x20, len(partition) // 0x200)
+    return bytes(data) + partition

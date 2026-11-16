@@ -48,6 +48,9 @@ Coverage is 100% of statements and branches. Tests carry only the `# Arrange`, `
 | Path | Holds |
 |:--|:--|
 | `src/henkan/` | The library; each module's tests sit beside it as `<module>_test.py` |
+| `src/henkan/formats/` | One module per container or file-system format |
+| `src/henkan/platforms/` | One module per console family: what identifies its discs, files and folders |
+| `src/henkan/*_test_support.py` | Builders of synthetic images and the corrupted-input harness the tests share |
 | `src/henkan/cli/` | The Typer command line |
 | `src/henkan/entry.py` | The console script, which says how to get the `cli` extra when Typer is absent |
 | `tests/` | Tests of the repository itself, of `python -m henkan` and of the scripts |

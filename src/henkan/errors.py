@@ -11,3 +11,15 @@ class FormatError(HenkanError):
 
 class RefusalError(HenkanError):
     pass
+
+
+class UnsupportedError(RefusalError):
+    pass
+
+
+class OrphanError(RefusalError):
+    pass
+
+
+class UsageError(HenkanError):
+    pass
