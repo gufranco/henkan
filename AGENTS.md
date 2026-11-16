@@ -51,4 +51,4 @@ Coverage is 100% of statements and branches. Tests carry only the `# Arrange`, `
 | `src/henkan/cli/` | The Typer command line |
 | `src/henkan/entry.py` | The console script, which says how to get the `cli` extra when Typer is absent |
 | `tests/` | Tests of the repository itself, of `python -m henkan` and of the scripts |
-| `scripts/` | Release and commit-message scripts |
+| `.github/scripts/` | Release and commit-message scripts, run by CI, semantic-release and the commit-msg hook |
