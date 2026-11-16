@@ -44,15 +44,17 @@ $ henkan --version
 henkan 0.0.0
 $ henkan doctor
 henkan             0.0.0
-python             3.14.10
-platform           Darwin arm64
+python             3.14.10 at /usr/bin/python3.14
+platform           Linux x86_64
 zlib               available
 bz2                available
 lzma               available
 compression.zstd   available
+typer              0.29.1 at /usr/lib/python3.14/site-packages
+chdman             0.285 at /usr/bin/chdman
 ```
 
-`henkan doctor --json` 以 JSON 格式輸出同一份報告，缺少必需組件時會以狀態碼 1 結束。
+`henkan doctor --json` 以 JSON 格式輸出同一份報告，缺少必需組件時會以狀態碼 1 結束。chdman 的版本若不在 0.285 至 0.289 範圍內，會顯示為警告。
 
 `henkan info` 讀取 CUE、GDI、TOC、CCD 及 MDS 描述檔、ISO 及 BIN 映像檔、PBP 檔案、3DS 檔案以及遊戲資料夾，並根據內容而非單憑檔案名稱作判斷。`henkan list` 以 `*` 標示預設目標格式。兩者均接受檔案及資料夾，使用 `--json` 輸出 JSON，拒絕某個檔案時會把原因寫到標準錯誤並以狀態碼 1 結束。
 

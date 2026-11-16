@@ -44,15 +44,17 @@ $ henkan --version
 henkan 0.0.0
 $ henkan doctor
 henkan             0.0.0
-python             3.14.10
-platform           Darwin arm64
+python             3.14.10 at /usr/bin/python3.14
+platform           Linux x86_64
 zlib               available
 bz2                available
 lzma               available
 compression.zstd   available
+typer              0.29.1 at /usr/lib/python3.14/site-packages
+chdman             0.285 at /usr/bin/chdman
 ```
 
-`henkan doctor --json` prints the same report as JSON, and exits 1 when something henkan needs is missing.
+`henkan doctor --json` prints the same report as JSON, and exits 1 when something henkan needs is missing. A chdman outside versions 0.285 to 0.289 is shown as a warning.
 
 `henkan info` reads CUE, GDI, TOC, CCD and MDS sheets, ISO and BIN images, PBP files, 3DS files and game folders, and decides from the content, never from the file name alone. `henkan list` marks the default target with `*`. Both take files and folders, print JSON with `--json`, and exit 1 when a file is refused, with the reason on standard error.
 

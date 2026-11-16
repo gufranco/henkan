@@ -13,7 +13,7 @@ from henkan.errors import UsageError
 from henkan.version import VERSION
 
 NAME_WIDTH = 18
-DOCTOR_HELP = "Check the installation: version, Python, platform and the codecs henkan needs."
+DOCTOR_HELP = "Check the installation: version, Python, platform, codecs, packages and chdman."
 INFO_HELP = "Show what each file or folder is: platform, disc class, game ID, tracks and files."
 LIST_HELP = "Show the formats each file or folder can become, with the default marked."
 CONVERT_HELP = "Plan a conversion with --dry-run: each step and the space it needs."

@@ -55,6 +55,8 @@ class TestDoctor:
             "python",
             "platform",
             *doctor.CODECS,
+            "typer",
+            "chdman",
         ]
 
     def test_json_carries_the_verdict_and_every_check(self):

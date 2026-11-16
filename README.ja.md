@@ -44,15 +44,17 @@ $ henkan --version
 henkan 0.0.0
 $ henkan doctor
 henkan             0.0.0
-python             3.14.10
-platform           Darwin arm64
+python             3.14.10 at /usr/bin/python3.14
+platform           Linux x86_64
 zlib               available
 bz2                available
 lzma               available
 compression.zstd   available
+typer              0.29.1 at /usr/lib/python3.14/site-packages
+chdman             0.285 at /usr/bin/chdman
 ```
 
-`henkan doctor --json` は同じレポートを JSON で出力し、必要なものが欠けている場合は終了コード 1 で終了します。
+`henkan doctor --json` は同じレポートを JSON で出力し、必要なものが欠けている場合は終了コード 1 で終了します。バージョン 0.285 から 0.289 の範囲外の chdman は警告として表示されます。
 
 `henkan info` は CUE、GDI、TOC、CCD、MDS のシート、ISO と BIN のイメージ、PBP ファイル、3DS ファイル、ゲームフォルダーを読み取り、ファイル名だけではなく内容から判別します。`henkan list` は既定の変換先を `*` で示します。どちらもファイルとフォルダーを受け取り、`--json` で JSON を出力し、ファイルを拒否した場合は理由を標準エラーに出力して終了コード 1 で終了します。
 
