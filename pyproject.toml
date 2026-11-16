@@ -43,6 +43,7 @@ dev = [
   "ruff==0.17.5",
   "mypy==2.4.1",
   "typer==0.29.1",
+  "hypothesis==6.170.15",
 ]
 
 [tool.hatch.version]
