@@ -29,7 +29,7 @@ jobs:
       - uses: actions/create-github-app-token@v3.3.0
         id: app-token
         with:
-          app-id: ${{ secrets.TAP_APP_ID }}
+          client-id: ${{ vars.TAP_APP_CLIENT_ID }}
           private-key: ${{ secrets.TAP_APP_PRIVATE_KEY }}
           owner: gufranco
           repositories: homebrew-tap
